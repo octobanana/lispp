@@ -196,7 +196,7 @@ Tokens str_tokens(std::string const& str) {
   return split(replace(str, {{"(", " ( "}, {")", " ) "}}), " ");
 }
 
-atm token_atom(std::string const& token) {
+atm token_atm(std::string const& token) {
   try {
     if (token.find(".") != std::string::npos) {
       return atm{num{static_cast<f64>(std::stod(token))}};
@@ -217,7 +217,7 @@ xpr tokens_xpr(Tokens& tokens) {
     return x;
   }
   else if (token == ")") {throw std::runtime_error("unexpected ')'");}
-  else {return xpr{token_atom(token)};}
+  else {return xpr{token_atm(token)};}
 }
 
 xpr read(std::string const& str) {
