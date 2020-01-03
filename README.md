@@ -8,6 +8,7 @@ A Lisp interpreter in C++.
   * [Environments](#environments)
   * [Compilers](#compilers)
   * [Dependencies](#dependencies)
+  * [Linked Libraries](#linked-libraries)
   * [macOS](#macos)
 * [Build](#build)
 * [Install](#install)
@@ -15,6 +16,66 @@ A Lisp interpreter in C++.
 
 ## About
 __lispp__ is a small Lisp interpreter in C++.
+
+## Usage
+A quick intro to the language:
+
+```
+; a comment
+
+; a number
+2
+-8
+4.0
+3/4
+
+; a string
+"octobanana"
+
+; a symbol
+*
+map
+nyble
+
+; a list
+'(1 2 3 4)
+'(1 "hello" 2 "world")
+'(* 2 4)
+
+; a function
+(* 2 2)
+(- 8 4)
+
+; create a mutable binding
+(var x 4)
+(var x 8)
+
+; create an immutable binding
+(let name "octobanana")
+(let name 8) ; error constant binding
+
+; create a function
+(fn [x] (* 2 x))
+
+; create, bind, and call a function
+(let double (fn [x] (* 2 x)))
+(double 4) ; 8
+
+; create and call an anonymous function
+((fn [x] (* 2 x)) 4) ; 8
+
+; prevent evaluation of expression
+(quote (1 2 3)) ; (1 2 3)
+'(1 2 3) ; (1 2 3)
+
+; index into list or string
+(1 "octobanana") ; "c"
+(2 '(1 2 3)) ; 3
+
+; get all but the first element in list or string
+(@ "octobanana") ; "ctobanana"
+(@ '(1 2 3)) ; (2 3)
+```
 
 ## Pre-Build
 This section describes what environments this program may run on,
@@ -36,6 +97,15 @@ any prior requirements or dependencies needed, and any third party libraries use
 
 ### Dependencies
 * __CMake__ >= 3.8
+* __ICU__ >= 62.1
+* __GMP__
+* __MPFR__
+
+### Linked Libraries
+* __icui18n__ (libicui18n) part of the ICU library
+* __icuuc__ (libicuuc) part of the ICU library
+* __gmp__ (libgmp) arbitrary precision arithmetic library
+* __mpfr__ (libmpfr) multiple-precision floating-point arithmetic library
 
 ### macOS
 Using a new version of __GCC__ or __Clang__ is __required__, as the default

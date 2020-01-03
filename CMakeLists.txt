@@ -46,7 +46,7 @@ SOFTWARE.
 cmake_minimum_required (VERSION 3.8 FATAL_ERROR)
 
 set (OB_TARGET "lispp")
-set (OB_VERSION "0.1.0")
+set (OB_VERSION "0.2.0")
 
 project (${OB_TARGET} VERSION ${OB_VERSION} LANGUAGES CXX)
 
@@ -117,6 +117,7 @@ set (CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} ${OB_LINK
 
 set (OB_SOURCES
   src/main.cc
+  src/ob/lispp.cc
 )
 
 set (OB_LINK_LIBRARIES
@@ -139,6 +140,10 @@ target_include_directories (
 
 target_link_libraries (${OB_TARGET}
   ${OB_LINK_LIBRARIES}
+  icui18n
+  icuuc
+  gmp
+  mpfr
 )
 
 install (TARGETS ${OB_TARGET} DESTINATION bin)

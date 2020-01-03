@@ -164,14 +164,20 @@ do_dev() {
   set +e
 
   # log files
-  log_base="./build/debug/log"
+  # log_base="./build/debug/log"
+  # log_build="${log_base}/build.log"
+  # log_error="${log_base}/error.log"
+  # log_warning="${log_base}/warning.log"
+  log_base="./log"
   log_build="${log_base}/build.log"
   log_error="${log_base}/error.log"
   log_warning="${log_base}/warning.log"
+  mkdir -p ./build/"${BUILD_TYPE}"
+  cd ./build/"${BUILD_TYPE}"
 
   # setup
-  rm -rf ./.m8 ./m8
-  ln -s ./dev/m8 ./m8
+  # rm -rf ./.m8 ./m8
+  # ln -s ./dev/m8 ./m8
 
   # create log directory
   mkdir -p "${log_base}"
@@ -181,14 +187,17 @@ do_dev() {
   :> "${log_error}"
   :> "${log_warning}"
 
+  cmake ../../ -DCMAKE_BUILD_TYPE="${BUILD_TYPE}" "${@}"
+  time unbuffer make -j $(( 2 * $(nproc --all) )) BUILD_TYPE="${BUILD_TYPE}" "${@}" 2>&1 | tee "${log_build}"
+
   # make
-  time unbuffer make -f ./dev/makefile -j $(( 2 * $(nproc --all) )) BUILD_TYPE="${BUILD_TYPE}" "${@}" 2>&1 | tee "${log_build}"
+  # time unbuffer make -f ./dev/makefile -j $(( 2 * $(nproc --all) )) BUILD_TYPE="${BUILD_TYPE}" "${@}" 2>&1 | tee "${log_build}"
 
   # preserve make exit status
   STATUS="${PIPESTATUS[0]}"
 
   # cleanup
-  rm -rf ./.m8 ./m8
+  # rm -rf ./.m8 ./m8
 
   # print horizontal rule
   hr
