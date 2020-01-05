@@ -97,6 +97,7 @@ any prior requirements or dependencies needed, and any third party libraries use
 
 ### Dependencies
 * __CMake__ >= 3.8
+* __Boost__ >= 1.71
 * __ICU__ >= 62.1
 * __GMP__
 * __MPFR__

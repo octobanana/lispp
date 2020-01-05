@@ -104,6 +104,13 @@ if ("${CMAKE_BUILD_TYPE}" STREQUAL "debug")
   endif ()
 endif ()
 
+set (OB_BOOST_VERSION "1.71.0")
+set (OB_BOOST_LIBRARIES "")
+find_package (Boost ${OB_BOOST_VERSION} COMPONENTS ${OB_BOOST_LIBRARIES} REQUIRED)
+if (NOT Boost_FOUND)
+  message (FATAL_ERROR "-- The Boost libraries could not be found")
+endif ()
+
 set (CMAKE_CXX_STANDARD 17)
 set (CMAKE_CXX_STANDARD_REQUIRED ON)
 
