@@ -1014,13 +1014,21 @@ void env_init(std::shared_ptr<Env> ev, int argc, char** argv) {
     return a;
   }}, ev, builtin};
 
-  (*ev)["||"] = Val{Fun{str_lst("(a b)"), [&](auto e) -> Xpr {
+  (*ev)["||"] = Val{Fun{str_lst("(a &)"), [&](auto e) -> Xpr {
+    auto const calc = [&](auto const& a) {
+      if (auto const x = xpr_sym(&a); !x || *x != "F") {
+        return true;
+      }
+      return false;
+    };
     auto a = eval(sym_xpr("a"), e);
-    auto const lhs = xpr_sym(&a);
-    if (!lhs || *lhs != "F") {return a;}
-    auto b = eval(sym_xpr("b"), e);
-    auto const rhs = xpr_sym(&b);
-    if (!rhs || *rhs != "F") {return b;}
+    if (calc(a)) {return a;}
+    auto x = eval(sym_xpr("@"), e);
+    auto& l = std::get<Lst>(x);
+    for (auto it = l.begin(); it != l.end(); ++it) {
+      a = eval(*it, e->current);
+      if (calc(a)) {return a;}
+    }
     return sym_xpr("F");
   }}, ev, builtin};
 
