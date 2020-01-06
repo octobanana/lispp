@@ -1166,16 +1166,25 @@ void env_init(std::shared_ptr<Env> ev, int argc, char** argv) {
     return a;
   }}, ev, builtin};
 
-  (*ev)["-"] = Val{Fun{str_lst("(a b)"), [&](auto e) -> Xpr {
+  (*ev)["-"] = Val{Fun{str_lst("(a b @)"), [&](auto e) -> Xpr {
+    auto const calc = [&](auto a, auto b) {
+      if (auto const lhs = xpr_num(&a)) {
+        if (auto const rhs = xpr_num(&b)) {
+          auto n = math(lhs, rhs, [](auto const a, auto const b) {return a - b;});
+          return num_normalize(n);
+        }
+      }
+      throw std::runtime_error("invalid types '" + typ_str.at(type(a)) + "' and '" + typ_str.at(type(b)) + "'");
+    };
     auto a = eval(sym_xpr("a"), e);
     auto b = eval(sym_xpr("b"), e);
-    if (auto const lhs = xpr_num(&a)) {
-      if (auto const rhs = xpr_num(&b)) {
-        auto n = math(lhs, rhs, [](auto const a, auto const b) {return a - b;});
-        return num_normalize(n);
-      }
+    a = calc(a, b);
+    auto x = eval(sym_xpr("@"), e);
+    auto& l = std::get<Lst>(x);
+    for (auto it = l.begin(); it != l.end(); ++it) {
+      a = calc(a, eval(*it, e->current));
     }
-    throw std::runtime_error("invalid types '" + typ_str.at(type(a)) + "' and '" + typ_str.at(type(b)) + "'");
+    return a;
   }}, ev, builtin};
 
   (*ev)["%"] = Val{Fun{str_lst("(a b)"), [&](auto e) -> Xpr {
