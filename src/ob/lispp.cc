@@ -1045,10 +1045,17 @@ void env_init(std::shared_ptr<Env> ev, int argc, char** argv) {
     return sym_xpr("T");
   }}, ev, builtin};
 
-  (*ev)["!="] = Val{Fun{str_lst("(a b)"), [&](auto e) -> Xpr {
+  (*ev)["!="] = Val{Fun{str_lst("(a b @)"), [&](auto e) -> Xpr {
     auto a = eval(sym_xpr("a"), e);
     auto b = eval(sym_xpr("b"), e);
-    return cmp(a, b, [](auto const lhs, auto const rhs) {return lhs != rhs;}) ? sym_xpr("T") : sym_xpr("F");
+    if (type(a) == type(b) && cmp(a, b, [](auto const lhs, auto const rhs) {return lhs == rhs;})) {return sym_xpr("F");}
+    auto x = eval(sym_xpr("@"), e);
+    auto& l = std::get<Lst>(x);
+    for (auto it = l.begin(); it != l.end(); ++it) {
+      b = eval(*it, e->current);
+      if (type(a) == type(b) && cmp(a, b, [](auto const lhs, auto const rhs) {return lhs == rhs;})) {return sym_xpr("F");}
+    }
+    return sym_xpr("T");
   }}, ev, builtin};
 
   (*ev)["<"] = Val{Fun{str_lst("(a b)"), [&](auto e) -> Xpr {
