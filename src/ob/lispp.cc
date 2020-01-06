@@ -1518,6 +1518,14 @@ void env_init(std::shared_ptr<Env> ev, int argc, char** argv) {
     return x;
   }}, ev, builtin};
 
+  (*ev)["lst?"] = Val{Fun{str_lst("(a)"), [&](auto e) -> Xpr {
+    auto x = eval(sym_xpr("a"), e);
+    if (auto const a = xpr_lst(&x)) {
+      return sym_xpr("T");
+    }
+    return sym_xpr("F");
+  }}, ev, builtin};
+
   (*ev)["str?"] = Val{Fun{str_lst("(a)"), [&](auto e) -> Xpr {
     auto x = eval(sym_xpr("a"), e);
     if (auto const a = xpr_str(&x)) {
