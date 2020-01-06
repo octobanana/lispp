@@ -336,7 +336,7 @@ std::shared_ptr<Env> Fun::bind(Sym const& sym, Lst& l, std::shared_ptr<Env> e) {
     auto& r = std::get<Lst>(rest);
     r.splice(r.begin(), l, v, l.end());
     // TODO should rest args be evaled?
-    (*ev)["@"] = {rest, e, Val::evaled};
+    (*ev)["@"] = Val(rest, e, Val::evaled);
     return ev;
   }
   if (l.size() != args.size()) {
@@ -346,7 +346,7 @@ std::shared_ptr<Env> Fun::bind(Sym const& sym, Lst& l, std::shared_ptr<Env> e) {
   auto s = args.begin();
   for (auto& v : l) {
     if (auto const sym = xpr_sym(&*s)) {
-      (*ev)[*sym] = {v, e};
+      (*ev)[*sym] = Val(v, e);
       ++s;
       continue;
     }
@@ -962,41 +962,41 @@ void env_init(std::shared_ptr<Env> ev, int argc, char** argv) {
     return num_xpr(Int{s});
   };
 
-  (*ev)["Int"] = Val{sym_xpr("Int"), ev, builtin};
-  (*ev)["Rat"] = Val{sym_xpr("Rat"), ev, builtin};
-  (*ev)["Flo"] = Val{sym_xpr("Flo"), ev, builtin};
-  (*ev)["Num"] = Val{sym_xpr("Flo"), ev, builtin};
-  (*ev)["Sym"] = Val{sym_xpr("Sym"), ev, builtin};
-  (*ev)["Str"] = Val{sym_xpr("Str"), ev, builtin};
-  (*ev)["Atm"] = Val{sym_xpr("Atm"), ev, builtin};
-  (*ev)["Fun"] = Val{sym_xpr("Fun"), ev, builtin};
-  (*ev)["Lst"] = Val{sym_xpr("Lst"), ev, builtin};
-  (*ev)["Xpr"] = Val{sym_xpr("Xpr"), ev, builtin};
+  (*ev)["Int"] = Val(sym_xpr("Int"), ev, builtin);
+  (*ev)["Rat"] = Val(sym_xpr("Rat"), ev, builtin);
+  (*ev)["Flo"] = Val(sym_xpr("Flo"), ev, builtin);
+  (*ev)["Num"] = Val(sym_xpr("Flo"), ev, builtin);
+  (*ev)["Sym"] = Val(sym_xpr("Sym"), ev, builtin);
+  (*ev)["Str"] = Val(sym_xpr("Str"), ev, builtin);
+  (*ev)["Atm"] = Val(sym_xpr("Atm"), ev, builtin);
+  (*ev)["Fun"] = Val(sym_xpr("Fun"), ev, builtin);
+  (*ev)["Lst"] = Val(sym_xpr("Lst"), ev, builtin);
+  (*ev)["Xpr"] = Val(sym_xpr("Xpr"), ev, builtin);
 
-  (*ev)["T"] = Val{sym_xpr("T"), ev, builtin};
-  (*ev)["F"] = Val{sym_xpr("F"), ev, builtin};
+  (*ev)["T"] = Val(sym_xpr("T"), ev, builtin);
+  (*ev)["F"] = Val(sym_xpr("F"), ev, builtin);
 
-  (*ev)["@"] = Val{([&]() {
+  (*ev)["@"] = Val(([&]() {
     Xpr args;
     auto& l = std::get<Lst>(args);
     for (int i = 0; i < argc; ++i) {
       l.emplace_back(str_xpr(std::string(argv[i])));
     }
     return args;
-  }()), ev, builtin};
+  }()), ev, builtin);
 
-  (*ev)["??"] = Val{Fun{str_lst("(a)"), [&](auto e) -> Xpr {
+  (*ev)["??"] = Val(Fun{str_lst("(a)"), [&](auto e) -> Xpr {
     return sym_xpr(typ_str.at(type(eval(sym_xpr("a"), e))));
-  }}, ev, builtin};
+  }}, ev, builtin);
 
-  (*ev)["!!"] = Val{Fun{str_lst("(a)"), [&](auto e) -> Xpr {
+  (*ev)["!!"] = Val(Fun{str_lst("(a)"), [&](auto e) -> Xpr {
     auto a = eval(sym_xpr("a"), e);
     auto const v = xpr_sym(&a);
     if (v && *v == "F") {return sym_xpr("T");}
     return sym_xpr("F");
-  }}, ev, builtin};
+  }}, ev, builtin);
 
-  (*ev)["&&"] = Val{Fun{str_lst("(a @)"), [&](auto e) -> Xpr {
+  (*ev)["&&"] = Val(Fun{str_lst("(a @)"), [&](auto e) -> Xpr {
     auto const calc = [&](auto const& a) {
       if (auto const x = xpr_sym(&a); x && *x == "F") {
         return true;
@@ -1012,9 +1012,9 @@ void env_init(std::shared_ptr<Env> ev, int argc, char** argv) {
       if (calc(a)) {return sym_xpr("F");}
     }
     return a;
-  }}, ev, builtin};
+  }}, ev, builtin);
 
-  (*ev)["||"] = Val{Fun{str_lst("(a &)"), [&](auto e) -> Xpr {
+  (*ev)["||"] = Val(Fun{str_lst("(a &)"), [&](auto e) -> Xpr {
     auto const calc = [&](auto const& a) {
       if (auto const x = xpr_sym(&a); !x || *x != "F") {
         return true;
@@ -1030,9 +1030,9 @@ void env_init(std::shared_ptr<Env> ev, int argc, char** argv) {
       if (calc(a)) {return a;}
     }
     return sym_xpr("F");
-  }}, ev, builtin};
+  }}, ev, builtin);
 
-  (*ev)["=="] = Val{Fun{str_lst("(a b @)"), [&](auto e) -> Xpr {
+  (*ev)["=="] = Val(Fun{str_lst("(a b @)"), [&](auto e) -> Xpr {
     auto a = eval(sym_xpr("a"), e);
     auto b = eval(sym_xpr("b"), e);
     if (type(a) != type(b) || cmp(a, b, [](auto const lhs, auto const rhs) {return lhs != rhs;})) {return sym_xpr("F");}
@@ -1043,9 +1043,9 @@ void env_init(std::shared_ptr<Env> ev, int argc, char** argv) {
       if (type(a) != type(b) || cmp(a, b, [](auto const lhs, auto const rhs) {return lhs != rhs;})) {return sym_xpr("F");}
     }
     return sym_xpr("T");
-  }}, ev, builtin};
+  }}, ev, builtin);
 
-  (*ev)["!="] = Val{Fun{str_lst("(a b @)"), [&](auto e) -> Xpr {
+  (*ev)["!="] = Val(Fun{str_lst("(a b @)"), [&](auto e) -> Xpr {
     auto a = eval(sym_xpr("a"), e);
     auto b = eval(sym_xpr("b"), e);
     if (type(a) == type(b) && cmp(a, b, [](auto const lhs, auto const rhs) {return lhs == rhs;})) {return sym_xpr("F");}
@@ -1056,33 +1056,33 @@ void env_init(std::shared_ptr<Env> ev, int argc, char** argv) {
       if (type(a) == type(b) && cmp(a, b, [](auto const lhs, auto const rhs) {return lhs == rhs;})) {return sym_xpr("F");}
     }
     return sym_xpr("T");
-  }}, ev, builtin};
+  }}, ev, builtin);
 
-  (*ev)["<"] = Val{Fun{str_lst("(a b)"), [&](auto e) -> Xpr {
+  (*ev)["<"] = Val(Fun{str_lst("(a b)"), [&](auto e) -> Xpr {
     auto a = eval(sym_xpr("a"), e);
     auto b = eval(sym_xpr("b"), e);
     return cmp(a, b, [](auto const lhs, auto const rhs) {return lhs < rhs;}) ? sym_xpr("T") : sym_xpr("F");
-  }}, ev, builtin};
+  }}, ev, builtin);
 
-  (*ev)["<="] = Val{Fun{str_lst("(a b)"), [&](auto e) -> Xpr {
+  (*ev)["<="] = Val(Fun{str_lst("(a b)"), [&](auto e) -> Xpr {
     auto a = eval(sym_xpr("a"), e);
     auto b = eval(sym_xpr("b"), e);
     return cmp(a, b, [](auto const lhs, auto const rhs) {return lhs <= rhs;}) ? sym_xpr("T") : sym_xpr("F");
-  }}, ev, builtin};
+  }}, ev, builtin);
 
-  (*ev)[">"] = Val{Fun{str_lst("(a b)"), [&](auto e) -> Xpr {
+  (*ev)[">"] = Val(Fun{str_lst("(a b)"), [&](auto e) -> Xpr {
     auto a = eval(sym_xpr("a"), e);
     auto b = eval(sym_xpr("b"), e);
     return cmp(a, b, [](auto const lhs, auto const rhs) {return lhs > rhs;}) ? sym_xpr("T") : sym_xpr("F");
-  }}, ev, builtin};
+  }}, ev, builtin);
 
-  (*ev)[">="] = Val{Fun{str_lst("(a b)"), [&](auto e) -> Xpr {
+  (*ev)[">="] = Val(Fun{str_lst("(a b)"), [&](auto e) -> Xpr {
     auto a = eval(sym_xpr("a"), e);
     auto b = eval(sym_xpr("b"), e);
     return cmp(a, b, [](auto const lhs, auto const rhs) {return lhs >= rhs;}) ? sym_xpr("T") : sym_xpr("F");
-  }}, ev, builtin};
+  }}, ev, builtin);
 
-  (*ev)["*"] = Val{Fun{str_lst("(a b @)"), [&](auto e) -> Xpr {
+  (*ev)["*"] = Val(Fun{str_lst("(a b @)"), [&](auto e) -> Xpr {
     auto const calc = [&](auto a, auto b) {
       if (auto const lhs = xpr_num(&a)) {
         if (auto const rhs = xpr_num(&b)) {
@@ -1104,9 +1104,9 @@ void env_init(std::shared_ptr<Env> ev, int argc, char** argv) {
       a = calc(a, eval(*it, e->current));
     }
     return a;
-  }}, ev, builtin};
+  }}, ev, builtin);
 
-  (*ev)["/"] = Val{Fun{str_lst("(a b @)"), [&](auto e) -> Xpr {
+  (*ev)["/"] = Val(Fun{str_lst("(a b @)"), [&](auto e) -> Xpr {
     auto const calc = [&](auto a, auto b) {
       if (auto const lhs = xpr_int(&a)) {
         if (auto const rhs = xpr_int(&b)) {
@@ -1131,9 +1131,9 @@ void env_init(std::shared_ptr<Env> ev, int argc, char** argv) {
       a = calc(a, eval(*it, e->current));
     }
     return a;
-  }}, ev, builtin};
+  }}, ev, builtin);
 
-  (*ev)["+"] = Val{Fun{str_lst("(a b @)"), [&](auto e) -> Xpr {
+  (*ev)["+"] = Val(Fun{str_lst("(a b @)"), [&](auto e) -> Xpr {
     auto const calc = [&](auto a, auto b) {
       if (auto const lhs = xpr_num(&a)) {
         if (auto const rhs = xpr_num(&b)) {
@@ -1164,9 +1164,9 @@ void env_init(std::shared_ptr<Env> ev, int argc, char** argv) {
       a = calc(a, eval(*it, e->current));
     }
     return a;
-  }}, ev, builtin};
+  }}, ev, builtin);
 
-  (*ev)["-"] = Val{Fun{str_lst("(a b @)"), [&](auto e) -> Xpr {
+  (*ev)["-"] = Val(Fun{str_lst("(a b @)"), [&](auto e) -> Xpr {
     auto const calc = [&](auto a, auto b) {
       if (auto const lhs = xpr_num(&a)) {
         if (auto const rhs = xpr_num(&b)) {
@@ -1185,9 +1185,9 @@ void env_init(std::shared_ptr<Env> ev, int argc, char** argv) {
       a = calc(a, eval(*it, e->current));
     }
     return a;
-  }}, ev, builtin};
+  }}, ev, builtin);
 
-  (*ev)["%"] = Val{Fun{str_lst("(a b)"), [&](auto e) -> Xpr {
+  (*ev)["%"] = Val(Fun{str_lst("(a b)"), [&](auto e) -> Xpr {
     auto a = eval(sym_xpr("a"), e);
     auto const lhs = xpr_int(&a);
     if (!lhs) {throw std::runtime_error("invalid type '" + typ_str.at(type(a)) + "'");}
@@ -1195,18 +1195,18 @@ void env_init(std::shared_ptr<Env> ev, int argc, char** argv) {
     auto const rhs = xpr_int(&b);
     if (!rhs) {throw std::runtime_error("invalid type '" + typ_str.at(type(b)) + "'");}
     return num_xpr(static_cast<Int>(*lhs % *rhs));
-  }}, ev, builtin};
+  }}, ev, builtin);
 
   // TODO add type functions
   // int, rat, flo, num, sym, str, fun, lst
 
-  // (*ev)["read"] = Val{Fun{str_lst("(a b)"), [&](auto e) -> Xpr {
+  // (*ev)["read"] = Val(Fun{str_lst("(a b)"), [&](auto e) -> Xpr {
   //   auto a = eval(sym_xpr("a"), e);
   //   auto b = eval(sym_xpr("b"), e);
   //   throw std::runtime_error("invalid types '" + typ_str.at(type(a)) + "' and '" + typ_str.at(type(b)) + "'");
-  // }}, ev, builtin};
+  // }}, ev, builtin);
 
-  (*ev)["try"] = Val{Fun{str_lst("(a b)"), [&](auto e) -> Xpr {
+  (*ev)["try"] = Val(Fun{str_lst("(a b)"), [&](auto e) -> Xpr {
     try {
       return eval(sym_xpr("a"), e);
     }
@@ -1221,23 +1221,23 @@ void env_init(std::shared_ptr<Env> ev, int argc, char** argv) {
       }
       throw std::runtime_error("invalid type '" + typ_str.at(type(b)) + "', expected 'Fn'");
     }
-  }}, ev, builtin};
+  }}, ev, builtin);
 
-  (*ev)["throw"] = Val{Fun{str_lst("(a)"), [&](auto e) -> Xpr {
+  (*ev)["throw"] = Val(Fun{str_lst("(a)"), [&](auto e) -> Xpr {
     auto a = eval(sym_xpr("a"), e);
     throw std::runtime_error(show(a));
-  }}, ev, builtin};
+  }}, ev, builtin);
 
-  (*ev)["eval"] = Val{Fun{str_lst("(a)"), [&](auto e) -> Xpr {
+  (*ev)["eval"] = Val(Fun{str_lst("(a)"), [&](auto e) -> Xpr {
     return eval(sym_xpr("a"), e);
 
     // auto a = eval(sym_xpr("a"), e);
     // return eval(a, e->current);
 
     // return eval((*e->find_inner("a"))->second.xpr, e->current);
-  }}, ev, builtin};
+  }}, ev, builtin);
 
-  (*ev)["apply"] = Val{Fun{str_lst("(a b)"), [&](auto e) -> Xpr {
+  (*ev)["apply"] = Val(Fun{str_lst("(a b)"), [&](auto e) -> Xpr {
     auto a = eval(sym_xpr("a"), e);
     auto b = eval(sym_xpr("b"), e);
     if (auto const lhs = xpr_fun(&a)) {
@@ -1247,9 +1247,9 @@ void env_init(std::shared_ptr<Env> ev, int argc, char** argv) {
       }
     }
     throw std::runtime_error("invalid types '" + typ_str.at(type(a)) + "' and '" + typ_str.at(type(b)) + "'");
-  }}, ev, builtin};
+  }}, ev, builtin);
 
-  (*ev)["map"] = Val{Fun{str_lst("(a b)"), [&](auto e) -> Xpr {
+  (*ev)["map"] = Val(Fun{str_lst("(a b)"), [&](auto e) -> Xpr {
     auto a = eval(sym_xpr("a"), e);
     auto b = eval(sym_xpr("b"), e);
     if (auto const lhs = xpr_fun(&a)) {
@@ -1285,9 +1285,9 @@ void env_init(std::shared_ptr<Env> ev, int argc, char** argv) {
       }
     }
     throw std::runtime_error("invalid types '" + typ_str.at(type(a)) + "' and '" + typ_str.at(type(b)) + "'");
-  }}, ev, builtin};
+  }}, ev, builtin);
 
-  (*ev)["filter"] = Val{Fun{str_lst("(a b)"), [&](auto e) -> Xpr {
+  (*ev)["filter"] = Val(Fun{str_lst("(a b)"), [&](auto e) -> Xpr {
     auto a = eval(sym_xpr("a"), e);
     auto b = eval(sym_xpr("b"), e);
     if (auto const lhs = xpr_fun(&a)) {
@@ -1309,9 +1309,9 @@ void env_init(std::shared_ptr<Env> ev, int argc, char** argv) {
       }
     }
     throw std::runtime_error("invalid types '" + typ_str.at(type(a)) + "' and '" + typ_str.at(type(b)) + "'");
-  }}, ev, builtin};
+  }}, ev, builtin);
 
-  (*ev)["reduce"] = Val{Fun{str_lst("(a b)"), [&](auto e) -> Xpr {
+  (*ev)["reduce"] = Val(Fun{str_lst("(a b)"), [&](auto e) -> Xpr {
     auto a = eval(sym_xpr("a"), e);
     auto b = eval(sym_xpr("b"), e);
     if (auto const lhs = xpr_fun(&a)) {
@@ -1329,30 +1329,30 @@ void env_init(std::shared_ptr<Env> ev, int argc, char** argv) {
       }
     }
     throw std::runtime_error("invalid types '" + typ_str.at(type(a)) + "' and '" + typ_str.at(type(b)) + "'");
-  }}, ev, builtin};
+  }}, ev, builtin);
 
-  (*ev)["env"] = Val{Fun{str_lst("()"), [&](auto e) -> Xpr {
+  (*ev)["env"] = Val(Fun{str_lst("()"), [&](auto e) -> Xpr {
     Xpr x;
     e->current->list(x);
     return x;
-  }}, ev, builtin};
+  }}, ev, builtin);
 
-  // (*ev)["env"] = Val{Fun{str_lst("()"), [&](auto e) -> Xpr {
+  // (*ev)["env"] = Val(Fun{str_lst("()"), [&](auto e) -> Xpr {
   //   e->current->dump();
   //   return sym_xpr("T");
-  // }}, ev, builtin};
+  // }}, ev, builtin);
 
-  // (*ev)["show"] = Val{Fun{str_lst("()"), [&](auto e) -> Xpr {
+  // (*ev)["show"] = Val(Fun{str_lst("()"), [&](auto e) -> Xpr {
   //   e->current->dump_inner();
   //   return sym_xpr("T");
-  // }}, ev, builtin};
+  // }}, ev, builtin);
 
-  // (*ev)["<<"] = Val{Fun{str_lst("(a)"), [&](auto e) -> Xpr {
+  // (*ev)["<<"] = Val(Fun{str_lst("(a)"), [&](auto e) -> Xpr {
   //   std::cout << print(eval(sym_xpr("a"), e)) << "\n";
   //   return sym_xpr("T");
-  // }}, ev, builtin};
+  // }}, ev, builtin);
 
-  (*ev)["<<"] = Val{Fun{str_lst("(@)"), [&](auto e) -> Xpr {
+  (*ev)["<<"] = Val(Fun{str_lst("(@)"), [&](auto e) -> Xpr {
     auto x = eval(sym_xpr("@"), e);
     auto& l = std::get<Lst>(x);
     for (auto it = l.begin(); it != l.end(); ++it) {
@@ -1360,9 +1360,9 @@ void env_init(std::shared_ptr<Env> ev, int argc, char** argv) {
     }
     std::cout << std::flush;
     return sym_xpr("T");
-  }}, ev, builtin};
+  }}, ev, builtin);
 
-  (*ev)[">>"] = Val{Fun{str_lst("()"), [&](auto e) -> Xpr {
+  (*ev)[">>"] = Val(Fun{str_lst("()"), [&](auto e) -> Xpr {
     std::string input;
     std::string prompt {aec::fg_magenta + "> " + aec::clear};
     if (std::getline(std::cin, input)) {
@@ -1374,18 +1374,18 @@ void env_init(std::shared_ptr<Env> ev, int argc, char** argv) {
       }
     }
     return sym_xpr("F");
-  }}, ev, builtin};
+  }}, ev, builtin);
 
-  (*ev)["slp"] = Val{Fun{str_lst("(a)"), [&](auto e) -> Xpr {
+  (*ev)["slp"] = Val(Fun{str_lst("(a)"), [&](auto e) -> Xpr {
     auto a = eval(sym_xpr("a"), e);
     if (auto const v = xpr_int(&a)) {
       std::this_thread::sleep_for(std::chrono::seconds(static_cast<long>(*v)));
       return sym_xpr("T");
     }
     throw std::runtime_error("expected 'Int'");
-  }}, ev, builtin};
+  }}, ev, builtin);
 
-  (*ev)["len"] = Val{Fun{str_lst("(a)"), [&](auto e) -> Xpr {
+  (*ev)["len"] = Val(Fun{str_lst("(a)"), [&](auto e) -> Xpr {
     auto a = eval(sym_xpr("a"), e);
     if (auto const v = xpr_lst(&a)) {
       return num_xpr(static_cast<Int>(v->size()));
@@ -1394,9 +1394,9 @@ void env_init(std::shared_ptr<Env> ev, int argc, char** argv) {
       return num_xpr(static_cast<Int>(v->size()));
     }
     throw std::runtime_error("invalid type '" + typ_str.at(type(a)) + "'");
-  }}, ev, builtin};
+  }}, ev, builtin);
 
-  (*ev)["if"] = Val{Fun{str_lst("(a b c)"), [&](auto e) -> Xpr {
+  (*ev)["if"] = Val(Fun{str_lst("(a b c)"), [&](auto e) -> Xpr {
     auto a = eval(sym_xpr("a"), e);
     if (auto const v = xpr_sym(&a)) {
       if (*v == "F") {return eval(sym_xpr("c"), e);}
@@ -1405,63 +1405,63 @@ void env_init(std::shared_ptr<Env> ev, int argc, char** argv) {
       if (v->empty()) {return eval(sym_xpr("c"), e);}
     }
     return eval(sym_xpr("b"), e);
-  }}, ev, builtin};
+  }}, ev, builtin);
 
-  (*ev)["let"] = Val{Fun{str_lst("(a b)"), [&](auto e) -> Xpr {
+  (*ev)["let"] = Val(Fun{str_lst("(a b)"), [&](auto e) -> Xpr {
     auto a = (*e->find_inner("a"))->second.xpr;
     // auto a = eval(sym_xpr("a"), e);
     if (auto const s = xpr_sym(&a)) {
       if (auto p = e->find_current_inner(*s)) {
         auto& v = (*p)->second;
         if (v.ctx & Val::constant) throw std::runtime_error("constant binding");
-        // v = Val{(*e->find_inner("b"))->second.xpr, e->current, Val::constant};
-        v = Val{eval(sym_xpr("b"), e), e->current, Val::constant | Val::evaled};
+        // v = Val((*e->find_inner("b"))->second.xpr, e->current, Val::constant);
+        v = Val(eval(sym_xpr("b"), e), e->current, Val::constant | Val::evaled);
         // auto b = (*e->find_inner("b"))->second.xpr;
         // resolve_sym(b, *s, eval(a, e->current));
-        // v = Val{b, e->current};
+        // v = Val(b, e->current);
         return a;
       }
-      // (*e->current)[*s] = Val{(*e->find_inner("b"))->second.xpr, e->current, Val::constant};
-      (*e->current)[*s] = Val{eval(sym_xpr("b"), e), e->current, Val::constant | Val::evaled};
+      // (*e->current)[*s] = Val((*e->find_inner("b"))->second.xpr, e->current, Val::constant);
+      (*e->current)[*s] = Val(eval(sym_xpr("b"), e), e->current, Val::constant | Val::evaled);
       return a;
     }
     throw std::runtime_error("expected symbol");
-  }}, ev, builtin};
+  }}, ev, builtin);
 
-  (*ev)["var"] = Val{Fun{str_lst("(a b)"), [&](auto e) -> Xpr {
+  (*ev)["var"] = Val(Fun{str_lst("(a b)"), [&](auto e) -> Xpr {
     auto a = (*e->find_inner("a"))->second.xpr;
     // auto a = eval(sym_xpr("a"), e);
     if (auto const s = xpr_sym(&a)) {
       if (auto p = e->find_current_inner(*s)) {
         auto& v = (*p)->second;
         if (v.ctx & Val::constant) throw std::runtime_error("constant binding");
-        // v = Val{(*e->find_inner("b"))->second.xpr, e->current};
-        v = Val{eval(sym_xpr("b"), e), e->current, Val::evaled};
+        // v = Val((*e->find_inner("b"))->second.xpr, e->current);
+        v = Val(eval(sym_xpr("b"), e), e->current, Val::evaled);
         // auto b = (*e->find_inner("b"))->second.xpr;
         // resolve_sym(b, *s, eval(a, e->current));
-        // v = Val{b, e->current};
+        // v = Val(b, e->current);
         return a;
       }
-      // (*e->current)[*s] = Val{(*e->find_inner("b"))->second.xpr, e->current};
-      (*e->current)[*s] = Val{eval(sym_xpr("b"), e), e->current, Val::evaled};
+      // (*e->current)[*s] = Val((*e->find_inner("b"))->second.xpr, e->current);
+      (*e->current)[*s] = Val(eval(sym_xpr("b"), e), e->current, Val::evaled);
       return a;
     }
     throw std::runtime_error("expected symbol");
-  }}, ev, builtin};
+  }}, ev, builtin);
 
-  (*ev)["set"] = Val{Fun{str_lst("(a b)"), [&](auto e) -> Xpr {
+  (*ev)["set"] = Val(Fun{str_lst("(a b)"), [&](auto e) -> Xpr {
     auto a = (*e->find_inner("a"))->second.xpr;
     // auto a = eval(sym_xpr("a"), e);
     if (auto const s = xpr_sym(&a)) {
       if (auto p = e->find_current(*s)) {
         auto& v = (*p)->second;
         if (v.ctx & Val::constant) throw std::runtime_error("constant binding");
-        // v = Val{(*e->find_inner("b"))->second.xpr, e->current};
-        // v = Val{(*e->find_inner("b"))->second.xpr, std::make_shared<Env>(v.env, e->current)};
-        // v = Val{(*e->find_inner("b"))->second.xpr, v.env};
-        // v = Val{eval(sym_xpr("b"), e), e->current};
-        // v = Val{(*e->find_inner("b"))->second.xpr, e->current};
-        v = Val{eval(sym_xpr("b"), e), e->current, Val::evaled};
+        // v = Val((*e->find_inner("b"))->second.xpr, e->current);
+        // v = Val((*e->find_inner("b"))->second.xpr, std::make_shared<Env>(v.env, e->current));
+        // v = Val((*e->find_inner("b"))->second.xpr, v.env);
+        // v = Val(eval(sym_xpr("b"), e), e->current);
+        // v = Val((*e->find_inner("b"))->second.xpr, e->current);
+        v = Val(eval(sym_xpr("b"), e), e->current, Val::evaled);
 
         // auto b = (*e->find_inner("b"))->second.xpr;
         // auto const contains_self = find_sym(b, *s);
@@ -1469,15 +1469,15 @@ void env_init(std::shared_ptr<Env> ev, int argc, char** argv) {
 
         // auto b = (*e->find_inner("b"))->second.xpr;
         // resolve_sym(b, *s, eval(a, e->current));
-        // v = Val{b, e->current};
+        // v = Val(b, e->current);
         return a;
       }
       throw std::runtime_error("unbound symbol '" + *s + "'");
     }
     throw std::runtime_error("expected symbol");
-  }}, ev, builtin};
+  }}, ev, builtin);
 
-  (*ev)["get"] = Val{Fun{str_lst("(a)"), [&](auto e) -> Xpr {
+  (*ev)["get"] = Val(Fun{str_lst("(a)"), [&](auto e) -> Xpr {
     auto a = (*e->find_inner("a"))->second.xpr;
     // auto a = eval(sym_xpr("a"), e);
     if (auto const s = xpr_sym(&a)) {
@@ -1488,18 +1488,18 @@ void env_init(std::shared_ptr<Env> ev, int argc, char** argv) {
       throw std::runtime_error("unbound symbol '" + *s + "'");
     }
     throw std::runtime_error("expected symbol");
-  }}, ev, builtin};
+  }}, ev, builtin);
 
-  (*ev)["quote"] = Val{Fun{str_lst("(a)"), [&](auto e) -> Xpr {
+  (*ev)["quote"] = Val(Fun{str_lst("(a)"), [&](auto e) -> Xpr {
     return (*e->find_inner("a"))->second.xpr;
-  }}, ev, builtin};
+  }}, ev, builtin);
 
   // TODO backquote comma splice
-  // (*ev)["template"] = Val{Fun{str_lst("(a)"), [&](auto e) -> Xpr {
+  // (*ev)["tmpl"] = Val(Fun{str_lst("(a)"), [&](auto e) -> Xpr {
   //   //
-  // }}, ev, builtin};
+  // }}, ev, builtin);
 
-  // (*ev)["lst"] = Val{Fun{str_lst("(a b)"), [&](auto e) -> Xpr {
+  // (*ev)["lst"] = Val(Fun{str_lst("(a b)"), [&](auto e) -> Xpr {
   //   auto a = eval(sym_xpr("a"), e);
   //   auto b = eval(sym_xpr("b"), e);
   //   if (auto const l = xpr_lst(&b)) {
@@ -1507,58 +1507,68 @@ void env_init(std::shared_ptr<Env> ev, int argc, char** argv) {
   //     return b;
   //   }
   //   return Xpr{Lst{a, b}};
-  // }}, ev, builtin};
+  // }}, ev, builtin);
 
-  (*ev)["lst"] = Val{Fun{str_lst("(@)"), [&](auto e) -> Xpr {
+  // TODO insert replace erase contains find
+  // (*ev)["ins"] = Val(Fun{str_lst("(a b c)"), [&](auto e) -> Xpr {
+  //   auto x = eval(sym_xpr("@"), e);
+  //   auto& l = std::get<Lst>(x);
+  //   for (auto it = l.begin(); it != l.end(); ++it) {
+  //     *it = eval(*it, e->current);
+  //   }
+  //   return x;
+  // }}, ev, builtin);
+
+  (*ev)["lst"] = Val(Fun{str_lst("(@)"), [&](auto e) -> Xpr {
     auto x = eval(sym_xpr("@"), e);
     auto& l = std::get<Lst>(x);
     for (auto it = l.begin(); it != l.end(); ++it) {
       *it = eval(*it, e->current);
     }
     return x;
-  }}, ev, builtin};
+  }}, ev, builtin);
 
-  (*ev)["lst?"] = Val{Fun{str_lst("(a)"), [&](auto e) -> Xpr {
+  (*ev)["lst?"] = Val(Fun{str_lst("(a)"), [&](auto e) -> Xpr {
     auto x = eval(sym_xpr("a"), e);
     if (auto const a = xpr_lst(&x)) {
       return sym_xpr("T");
     }
     return sym_xpr("F");
-  }}, ev, builtin};
+  }}, ev, builtin);
 
-  (*ev)["str?"] = Val{Fun{str_lst("(a)"), [&](auto e) -> Xpr {
+  (*ev)["str?"] = Val(Fun{str_lst("(a)"), [&](auto e) -> Xpr {
     auto x = eval(sym_xpr("a"), e);
     if (auto const a = xpr_str(&x)) {
       return sym_xpr("T");
     }
     return sym_xpr("F");
-  }}, ev, builtin};
+  }}, ev, builtin);
 
-  (*ev)["sym?"] = Val{Fun{str_lst("(a)"), [&](auto e) -> Xpr {
+  (*ev)["sym?"] = Val(Fun{str_lst("(a)"), [&](auto e) -> Xpr {
     auto x = eval(sym_xpr("a"), e);
     if (auto const a = xpr_sym(&x)) {
       return sym_xpr("T");
     }
     return sym_xpr("F");
-  }}, ev, builtin};
+  }}, ev, builtin);
 
-  (*ev)["num?"] = Val{Fun{str_lst("(a)"), [&](auto e) -> Xpr {
+  (*ev)["num?"] = Val(Fun{str_lst("(a)"), [&](auto e) -> Xpr {
     auto x = eval(sym_xpr("a"), e);
     if (auto const a = xpr_num(&x)) {
       return sym_xpr("T");
     }
     return sym_xpr("F");
-  }}, ev, builtin};
+  }}, ev, builtin);
 
-  (*ev)["atm?"] = Val{Fun{str_lst("(a)"), [&](auto e) -> Xpr {
+  (*ev)["atm?"] = Val(Fun{str_lst("(a)"), [&](auto e) -> Xpr {
     auto x = eval(sym_xpr("a"), e);
     if (auto const a = xpr_atm(&x)) {
       return sym_xpr("T");
     }
     return sym_xpr("F");
-  }}, ev, builtin};
+  }}, ev, builtin);
 
-  (*ev)["nul?"] = Val{Fun{str_lst("(a)"), [&](auto e) -> Xpr {
+  (*ev)["nul?"] = Val(Fun{str_lst("(a)"), [&](auto e) -> Xpr {
     auto x = eval(sym_xpr("a"), e);
     if (auto const l = xpr_lst(&x)) {
       if (l->empty()) {return sym_xpr("T");}
@@ -1567,9 +1577,9 @@ void env_init(std::shared_ptr<Env> ev, int argc, char** argv) {
       if (s->empty()) {return sym_xpr("T");}
     }
     return sym_xpr("F");
-  }}, ev, builtin};
+  }}, ev, builtin);
 
-  (*ev)["sys"] = Val{Fun{str_lst("(a)"), [&](auto e) -> Xpr {
+  (*ev)["sys"] = Val(Fun{str_lst("(a)"), [&](auto e) -> Xpr {
     auto x = eval(sym_xpr("a"), e);
     if (auto const s = xpr_str(&x)) {
       std::cout << "\n";
@@ -1577,9 +1587,9 @@ void env_init(std::shared_ptr<Env> ev, int argc, char** argv) {
       return sym_xpr("T");
     }
     throw std::runtime_error("invalid type '" + typ_str.at(type(x)) + "'");
-  }}, ev, builtin};
+  }}, ev, builtin);
 
-  (*ev)["ln"] = Val{Fun{str_lst("(a)"), [&](auto e) -> Xpr {
+  (*ev)["ln"] = Val(Fun{str_lst("(a)"), [&](auto e) -> Xpr {
     auto x = eval(sym_xpr("a"), e);
     if (auto const s = xpr_str(&x)) {
       std::ifstream file {s->str()};
@@ -1595,9 +1605,9 @@ void env_init(std::shared_ptr<Env> ev, int argc, char** argv) {
       return sym_xpr("T");
     }
     throw std::runtime_error("invalid type '" + typ_str.at(type(x)) + "'");
-  }}, ev, builtin};
+  }}, ev, builtin);
 
-  (*ev)["ld"] = Val{Fun{str_lst("(a)"), [&](auto e) -> Xpr {
+  (*ev)["ld"] = Val(Fun{str_lst("(a)"), [&](auto e) -> Xpr {
     auto x = eval(sym_xpr("a"), e);
     if (auto const s = xpr_str(&x)) {
       std::ifstream file {s->str()};
@@ -1615,12 +1625,12 @@ void env_init(std::shared_ptr<Env> ev, int argc, char** argv) {
       return sym_xpr("T");
     }
     throw std::runtime_error("invalid type '" + typ_str.at(type(x)) + "'");
-  }}, ev, builtin};
+  }}, ev, builtin);
 
-  // (*ev)["case"] = Val{Fun{str_lst("(@)"), [&](auto e) -> Xpr {
-  // }}, ev, builtin};
+  // (*ev)["case"] = Val(Fun{str_lst("(@)"), [&](auto e) -> Xpr {
+  // }}, ev, builtin);
 
-  // (*ev)["cond"] = Val{Fun{str_lst("(@)"), [&](auto e) -> Xpr {
+  // (*ev)["cond"] = Val(Fun{str_lst("(@)"), [&](auto e) -> Xpr {
   //   auto x = eval(sym_xpr("@"), e);
   //   auto& l = std::get<Lst>(x);
   //   Xpr res {sym_xpr("F")};
@@ -1634,9 +1644,9 @@ void env_init(std::shared_ptr<Env> ev, int argc, char** argv) {
   //     }
   //   }
   //   return res;
-  // }}, ev, builtin};
+  // }}, ev, builtin);
 
-  // (*ev)["pl"] = Val{Fun{str_lst("(@)"), [&](auto e) -> Xpr {
+  // (*ev)["pl"] = Val(Fun{str_lst("(@)"), [&](auto e) -> Xpr {
   //   auto x = eval(sym_xpr("@"), e);
   //   auto& l = std::get<Lst>(x);
   //   Xpr res {sym_xpr("F")};
@@ -1652,9 +1662,9 @@ void env_init(std::shared_ptr<Env> ev, int argc, char** argv) {
   //     }
   //   }
   //   return res;
-  // }}, ev, builtin};
+  // }}, ev, builtin);
 
-  // (*ev)["pr"] = Val{Fun{str_lst("(a b)"), [&](auto e) -> Xpr {
+  // (*ev)["pr"] = Val(Fun{str_lst("(a b)"), [&](auto e) -> Xpr {
   //   auto a = eval(sym_xpr("a"), e);
   //   auto b = eval(sym_xpr("b"), e);
   //   Xpr res {sym_xpr("F")};
@@ -1665,9 +1675,9 @@ void env_init(std::shared_ptr<Env> ev, int argc, char** argv) {
   //     return res;
   //   }
   //   throw std::runtime_error("expected 'Int'");
-  // }}, ev, builtin};
+  // }}, ev, builtin);
 
-  (*ev)["fmt"] = Val{Fun{str_lst("(a @)"), [&](auto e) -> Xpr {
+  (*ev)["fmt"] = Val(Fun{str_lst("(a @)"), [&](auto e) -> Xpr {
     auto a = eval(sym_xpr("a"), e);
     if (auto const s = xpr_str(&a)) {
       auto x = eval(sym_xpr("@"), e);
@@ -1698,9 +1708,9 @@ void env_init(std::shared_ptr<Env> ev, int argc, char** argv) {
       return a;
     }
     throw std::runtime_error("invalid type '" + typ_str.at(type(a)) + "'");
-  }}, ev, builtin};
+  }}, ev, builtin);
 
-  (*ev)["do"] = Val{Fun{str_lst("(a)"), [&](auto e) -> Xpr {
+  (*ev)["do"] = Val(Fun{str_lst("(a)"), [&](auto e) -> Xpr {
     // auto x = eval(sym_xpr("a"), e);
     auto x = (*e->find_inner("a"))->second.xpr;
     Xpr res {sym_xpr("F")};
@@ -1713,9 +1723,9 @@ void env_init(std::shared_ptr<Env> ev, int argc, char** argv) {
       }
     }
     // throw std::runtime_error("exceeded loop max");
-  }}, ev, builtin};
+  }}, ev, builtin);
 
-  (*ev)["pn"] = Val{Fun{str_lst("(@)"), [&](auto e) -> Xpr {
+  (*ev)["pn"] = Val(Fun{str_lst("(@)"), [&](auto e) -> Xpr {
     auto x = eval(sym_xpr("@"), e);
     auto& l = std::get<Lst>(x);
     Xpr res {sym_xpr("F")};
@@ -1723,9 +1733,9 @@ void env_init(std::shared_ptr<Env> ev, int argc, char** argv) {
       res = eval(*it, e->current);
     }
     return res;
-  }}, ev, builtin};
+  }}, ev, builtin);
 
-  // (*ev)["yield"] = Val{Fun{str_lst("(a)"), [&](auto e) -> Xpr {
+  // (*ev)["yield"] = Val(Fun{str_lst("(a)"), [&](auto e) -> Xpr {
   //   auto x = eval(sym_xpr("a"), e);
   //   auto x = (*e->find_inner("a"))->second.xpr;
   //   Xpr res {sym_xpr("F")};
@@ -1738,14 +1748,14 @@ void env_init(std::shared_ptr<Env> ev, int argc, char** argv) {
   //     }
   //   }
   //   // throw std::runtime_error("exceeded loop max");
-  // }}, ev, builtin};
+  // }}, ev, builtin);
 
-  (*ev)["fn"] = Val{Fun{str_lst("(a b)"), [&](auto e) -> Xpr {
+  (*ev)["fn"] = Val(Fun{str_lst("(a b)"), [&](auto e) -> Xpr {
     return Xpr{Fun{std::get<Lst>((*e->find_inner("a"))->second.xpr), [body = (*e->find_inner("b"))->second.xpr](std::shared_ptr<Env> e) mutable -> Xpr {
       // return Xpr{Fun{std::get<Lst>(eval(sym_xpr("a"), e)), [body = eval(sym_xpr("b"), e)](std::shared_ptr<Env> e) mutable -> Xpr {
       return eval(body, e);
     }, e->current}};
-  }}, ev, builtin};
+  }}, ev, builtin);
 }
 
 void repl(int argc, char** argv) {

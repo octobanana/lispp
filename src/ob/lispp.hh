@@ -123,6 +123,14 @@ struct Fun {
 struct Xpr : std::variant<Lst, Fun, Atm> {};
 
 struct Val {
+  Val() = default;
+  Val(Xpr const& xpr_, std::shared_ptr<Env> env_ = nullptr, u64 ctx_ = nil) : xpr {xpr_}, env {env_}, ctx {ctx_} {}
+  Val(Fun const& fun_, std::shared_ptr<Env> env_ = nullptr, u64 ctx_ = nil) : xpr {fun_}, env {env_}, ctx {ctx_} {}
+  Val(Val&&) = default;
+  Val(Val const&) = default;
+  ~Val() = default;
+  Val& operator=(Val&&) = default;
+  Val& operator=(Val const&) = default;
   enum : u64 {
     nil = 0,
     evaled = 1<<0,
